@@ -1,0 +1,20 @@
+{
+  "name": "Email Pattern Finder",
+  "version": "1.0",
+  "platform": "web",
+  "service": "CRM",
+  "description": "Fetches all Leads emails, extracts domains, and shows frequency counts",
+  "scopes": [
+    "ZohoCRM.modules.leads.READ"
+  ],
+  "content_security_policy": "script-src 'self' https://js.zohostatic.com https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; object-src 'self'",
+  "modules": {
+    "web": [
+      {
+        "location": "Leads.rightpanel",
+        "url": "widget.html"
+      }
+    ]
+  }
+}
+

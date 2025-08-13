@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Email Pattern Finder - Domain Emails</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #ffffff;
+    }
+    .back {
+      background: linear-gradient(135deg, #007acc 0%, #0056b3 100%);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 32px;
+      font-weight: 700;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      letter-spacing: 1px;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .domain {
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+    .stats {
+      text-align: center;
+      font-size: 16px;
+      margin-bottom: 25px;
+      opacity: 0.9;
+    }
+    .email-list {
+      margin-top: 20px;
+    }
+    .email-item {
+      background: rgba(255, 255, 255, 0.05);
+      border-left: 4px solid #ff6b6b;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      padding: 18px 20px;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .email-item:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateX(5px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .email {
+      font-weight: 600;
+      font-size: 16px;
+      margin-bottom: 5px;
+    }
+    .lead-detail {
+      font-size: 13px;
+      opacity: 0.8;
+      margin-bottom: 2px;
+    }
+    .lead-info-small {
+      font-size: 12px;
+      opacity: 0.7;
+      margin-bottom: 2px;
+    }
+    .loading, .error {
+      text-align: center;
+      padding: 40px 20px;
+      font-size: 18px;
+    }
+    .error {
+      color: #ff6b6b;
+    }
+    .btn-retry {
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-size: 14px;
+      margin-top: 15px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .btn-retry:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+    }
+    .email-number {
+      background: rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <button class="back" onclick="history.back()">← Back to Domains</button>
+  <div class="header">Email Pattern Finder</div>
+  <div class="card">
+    <div class="domain" id="domainTxt"></div>
+    <div class="stats" id="domainStats"></div>
+    <div class="email-list" id="emailList"></div>
+  </div>
+
+  <!-- Zoho Embedded App SDK: Make sure this matches your config and/or CRM setup -->
+  <script src="ZohoEmbededAppSDK.min.js"></script>
+  <script>
+    // Get domain from URL param (?domain=example.com)
+    function getDomainFromUrl() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('domain') || "";
+    }
+    const domain = getDomainFromUrl().toLowerCase().trim();
+
+    // Show domain at top
+    document.getElementById('domainTxt').textContent = domain ? domain : "(no domain selected)";
+    document.getElementById('emailList').innerHTML =
+      '<div class="loading">Loading emails for this domain...</div>';
+
+    // Main loader function
+    async function loadLeadsForDomain() {
+      if (!domain) {
+        document.getElementById('emailList').innerHTML =
+          `<div class="error"><b>No domain specified.</b></div>`;
+        document.getElementById('domainStats').textContent = '';
+        return;
+      }
+
+      try {
+        document.getElementById('emailList').innerHTML = '<div class="loading">Connecting to Zoho CRM...</div>';
+        await ZOHO.embeddedApp.init();
+        document.getElementById('emailList').innerHTML = '<div class="loading">Fetching leads from your CRM...</div>';
+        let page = 1, per_page = 200, allLeads = [];
+        let moreRecords = true;
+        while (moreRecords && page <= 10) { // Max 2000 leads to avoid infinite loops
+          const response = await ZOHO.CRM.API.getAllRecords({
+            Entity: "Leads",
+            page: page,
+            per_page: per_page
+          });
+          const leads = (response && response.data) ? response.data : [];
+          allLeads = allLeads.concat(leads);
+          moreRecords = leads.length === per_page;
+          page += 1;
+        }
+
+        // Filter leads by email domain
+        const leadsWithDomain = allLeads.filter(lead => {
+          if (!lead.Email) return false;
+          const email = lead.Email.trim().toLowerCase();
+          return email.endsWith(`@${domain}`);
+        });
+
+        // Show stats and display results
+        document.getElementById('domainStats').textContent =
+          `${leadsWithDomain.length} lead${leadsWithDomain.length === 1 ? '' : 's'} found with ${domain} email addresses`;
+
+        if (leadsWithDomain.length === 0) {
+          document.getElementById('emailList').innerHTML =
+            `<div class="error">No leads found with email addresses ending with <b>@${domain}</b> in your CRM.<br><br>
+            <small>Total leads checked: ${allLeads.length}</small></div>`;
+        } else {
+          const leadItems = leadsWithDomain.map((lead, idx) => {
+            const firstName = lead.First_Name || '';
+            const lastName = lead.Last_Name || '';
+            const fullName = `${firstName} ${lastName}`.trim() || lead.Full_Name || lead.Company || 'Unknown Name';
+            const contactNo = lead.Phone || lead.Mobile || lead.Work_Phone || lead.Home_Phone || '';
+            const email = lead.Email || 'No email';
+            const company = lead.Company || '';
+            const status = lead.Lead_Status || '';
+            const leadSource = lead.Lead_Source || '';
+            return `
+              <div class="email-item">
+                <div>
+                  <div class="email">${email}</div>
+                  <div class="lead-detail">Name: ${fullName}</div>
+                  ${contactNo ? `<div class="lead-info-small">Contact: ${contactNo}</div>` : ''}
+                  ${company ? `<div class="lead-info-small">Company: ${company}</div>` : ''}
+                  ${status ? `<div class="lead-info-small">Status: ${status}</div>` : ''}
+                  ${leadSource ? `<div class="lead-info-small">Source: ${leadSource}</div>` : ''}
+                </div>
+                <div class="email-number">#${idx + 1}</div>
+              </div>
+            `;
+          }).join('');
+          document.getElementById('emailList').innerHTML = leadItems;
+        }
+      } catch (e) {
+        document.getElementById('domainStats').textContent = '';
+        document.getElementById('emailList').innerHTML =
+          `<div class="error">
+            Error loading leads from CRM: ${e.message || e}
+            <br><br>
+            <button class="btn-retry" onclick="loadLeadsForDomain()">Try Again</button>
+          </div>`;
+      }
+    }
+
+    loadLeadsForDomain();
+  </script>
+</body>
+</html>

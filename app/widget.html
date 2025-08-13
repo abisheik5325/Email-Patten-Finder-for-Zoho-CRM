@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lead Email Domain Counter Widget</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+</head>
+<body>
+  <h2>Lead Email Domains</h2>
+  <div id="widget-content">
+    <div id="loading">Loading email domains...</div>
+  </div>
+  
+  <!-- Chart Container -->
+  <div id="chart-container" style="display: none;">
+    <h3>Domain Distribution</h3>
+    <div class="chart-wrapper">
+      <canvas id="domainChart"></canvas>
+    </div>
+  </div>
+  <script src="ZohoEmbededAppSDK.min.js"></script>
+  <script>
+    // Chart instance variable
+    let domainChart = null;
+    
+    // Pagination variables
+    let currentPage = 1;
+    const domainsPerPage = 10;
+    let allDomainData = [];
+    
+    // Generate vibrant colors for pie chart
+    function generateColors(count) {
+      const colors = [
+        '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+        '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
+        '#F8C471', '#82E0AA', '#F1948A', '#85C1E9', '#D2B4DE',
+        '#AED6F1', '#A3E4D7', '#D5DBDB', '#FADBD8', '#D6EAF8'
+      ];
+      
+      // If we need more colors than predefined, generate random ones
+      while (colors.length < count) {
+        colors.push(`hsl(${Math.floor(Math.random() * 360)}, 70%, 60%)`);
+      }
+      
+      return colors.slice(0, count);
+    }
+
+    // Pagination functions
+    function goToPage(page) {
+      currentPage = page;
+      renderDomainTable();
+    }
+    
+    function nextPage() {
+      const totalPages = Math.ceil(allDomainData.length / domainsPerPage);
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderDomainTable();
+      }
+    }
+    
+    function prevPage() {
+      if (currentPage > 1) {
+        currentPage--;
+        renderDomainTable();
+      }
+    }
+    
+    // Render only the table with pagination
+    function renderDomainTable() {
+      const totalDomains = allDomainData.length;
+      const totalEmails = allDomainData.reduce((sum, item) => sum + item.count, 0);
+      const totalPages = Math.ceil(totalDomains / domainsPerPage);
+      
+      // Calculate pagination
+      const startIndex = (currentPage - 1) * domainsPerPage;
+      const endIndex = startIndex + domainsPerPage;
+      const currentPageDomains = allDomainData.slice(startIndex, endIndex);
+      
+      let html = `
+        <div style="margin-bottom: 15px; text-align: center;">
+          <p><strong>${totalEmails}</strong> total emails from <strong>${totalDomains}</strong> domains</p>
+          <p style="font-size: 14px; opacity: 0.8;">Page ${currentPage} of ${totalPages} (Showing ${currentPageDomains.length} domains)</p>
+        </div>
+        <table>
+          <tr>
+            <th>Domain</th>
+            <th>Count</th>
+            <th>%</th>
+          </tr>
+      `;
+      
+      currentPageDomains.forEach((item, index) => {
+        const percentage = ((item.count / totalEmails) * 100).toFixed(1);
+        const globalIndex = startIndex + index;
+        const color = item.color;
+        html += `
+          <tr>
+            <td>
+              <span style="display: inline-block; width: 12px; height: 12px; background-color: ${color}; border-radius: 50%; margin-right: 8px; vertical-align: middle;"></span>
+              <a href="domain.html?domain=${encodeURIComponent(item.domain)}&color=${encodeURIComponent(color)}" 
+                 style="color: #ffffff; text-decoration: none; border-bottom: 1px dotted rgba(255,255,255,0.5); transition: all 0.3s ease;"
+                 onmouseover="this.style.borderBottom='1px solid #ff6b6b'; this.style.color='#ff6b6b';"
+                 onmouseout="this.style.borderBottom='1px dotted rgba(255,255,255,0.5)'; this.style.color='#ffffff';"
+                 title="Click to view all emails from ${item.domain}">
+                ${item.domain}
+              </a>
+            </td>
+            <td>${item.count}</td>
+            <td>${percentage}%</td>
+          </tr>
+        `;
+      });
+      
+      html += '</table>';
+      
+      // Add pagination controls
+      if (totalPages > 1) {
+        html += `
+          <div style="display: flex; justify-content: center; align-items: center; margin-top: 15px; gap: 10px;">
+            <button onclick="prevPage()" ${currentPage === 1 ? 'disabled' : ''} 
+                    style="padding: 8px 12px; background: ${currentPage === 1 ? '#666' : '#007acc'}; color: white; border: none; border-radius: 5px; cursor: ${currentPage === 1 ? 'not-allowed' : 'pointer'}; font-size: 14px;">
+              ◀ Prev
+            </button>
+            
+            <div style="display: flex; gap: 5px;">
+        `;
+        
+        // Page numbers
+        for (let i = 1; i <= totalPages; i++) {
+          if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+            html += `
+              <button onclick="goToPage(${i})" 
+                      style="padding: 8px 12px; background: ${i === currentPage ? '#ff6b6b' : '#007acc'}; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; min-width: 35px;">
+                ${i}
+              </button>
+            `;
+          } else if (i === currentPage - 3 || i === currentPage + 3) {
+            html += `<span style="color: white; padding: 8px 4px;">...</span>`;
+          }
+        }
+        
+        html += `
+            </div>
+            
+            <button onclick="nextPage()" ${currentPage === totalPages ? 'disabled' : ''} 
+                    style="padding: 8px 12px; background: ${currentPage === totalPages ? '#666' : '#007acc'}; color: white; border: none; border-radius: 5px; cursor: ${currentPage === totalPages ? 'not-allowed' : 'pointer'}; font-size: 14px;">
+              Next ▶
+            </button>
+          </div>
+        `;
+      }
+      
+      document.getElementById('widget-content').innerHTML = html;
+    }
+
+    // Create or update pie chart
+    function createPieChart(domainCounts) {
+      const ctx = document.getElementById('domainChart').getContext('2d');
+      
+      // Destroy existing chart if it exists
+      if (domainChart) {
+        domainChart.destroy();
+      }
+      
+      const sortedDomains = Object.entries(domainCounts).sort((a, b) => b[1] - a[1]);
+      const domains = sortedDomains.map(item => item[0]);
+      const counts = sortedDomains.map(item => item[1]);
+      const colors = generateColors(domains.length);
+      
+      domainChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: domains,
+          datasets: [{
+            data: counts,
+            backgroundColor: colors,
+            borderColor: colors.map(color => color),
+            borderWidth: 2,
+            hoverBorderWidth: 3,
+            hoverBorderColor: '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              position: window.innerWidth < 480 ? 'bottom' : 'right',
+              align: 'center',
+              labels: {
+                color: '#ffffff',
+                font: {
+                  size: 12,
+                  family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+                },
+                padding: 10,
+                usePointStyle: true,
+                pointStyle: 'circle',
+                boxWidth: 12,
+                boxHeight: 12
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              titleColor: '#ffffff',
+              bodyColor: '#ffffff',
+              borderColor: '#ffffff',
+              borderWidth: 1,
+              callbacks: {
+                label: function(context) {
+                  const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+                  const percentage = ((context.parsed / total) * 100).toFixed(1);
+                  return `${context.label}: ${context.parsed} (${percentage}%)`;
+                }
+              }
+            }
+          },
+          layout: {
+            padding: {
+              top: 10,
+              bottom: 10
+            }
+          },
+          animation: {
+            duration: 1000,
+            easing: 'easeInOutQuart'
+          }
+        }
+      });
+      
+      // Show chart container
+      document.getElementById('chart-container').style.display = 'block';
+    }
+
+    // Add debugging function
+    function debugLog(message, data = null) {
+      console.log(`[Email Pattern Finder] ${message}`, data);
+    }
+
+    // Show loading state
+    function showLoading(message = "Loading email domains...") {
+      document.getElementById('widget-content').innerHTML = `<div id="loading">${message}</div>`;
+    }
+
+    // Show error state
+    function showError(message) {
+      document.getElementById('widget-content').innerHTML = `
+        <div style="color: #ff6b6b; text-align: center; padding: 20px;">
+          <h3>Error</h3>
+          <p>${message}</p>
+          <button onclick="main()" style="padding: 10px 20px; background: #007acc; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            Retry
+          </button>
+        </div>
+      `;
+    }
+
+    // Fetch leads from Zoho CRM
+    async function fetchLeads() {
+      try {
+        debugLog("Initializing Zoho CRM SDK...");
+        
+        // Initialize Zoho CRM JavaScript SDK
+        await ZOHO.embeddedApp.init();
+        debugLog("SDK initialized successfully");
+        
+        let allLeads = [];
+        let page = 1;
+        const perPage = 200;
+        let totalFetched = 0;
+        
+        showLoading("Fetching leads from Zoho CRM...");
+        
+        while (true) {
+          debugLog(`Fetching page ${page}...`);
+          
+          // Fetch leads from Zoho CRM
+          const response = await ZOHO.CRM.API.getAllRecords({
+            Entity: "Leads",
+            sort_order: "desc",
+            per_page: perPage,
+            page: page
+          });
+          
+          debugLog(`Page ${page} response:`, response);
+          
+          if (response.data && response.data.length > 0) {
+            // Extract email field from each lead
+            const leadsWithEmail = response.data.map(lead => ({
+              email: lead.Email || lead.email || lead.EMAIL || ""
+            })).filter(lead => lead.email); // Only include leads with emails
+            
+            allLeads = allLeads.concat(leadsWithEmail);
+            totalFetched += response.data.length;
+            
+            debugLog(`Found ${leadsWithEmail.length} leads with emails on page ${page}`);
+            showLoading(`Processing ${totalFetched} leads...`);
+            
+            // If we got less than perPage records, we've reached the end
+            if (response.data.length < perPage) {
+              break;
+            }
+            
+            page++;
+          } else {
+            debugLog("No more data found, breaking loop");
+            break;
+          }
+          
+          // Add small delay to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        debugLog(`Total leads with emails found: ${allLeads.length}`);
+        return allLeads;
+      } catch (error) {
+        debugLog('Error fetching leads:', error);
+        throw error; // Re-throw to handle in main function
+      }
+    }
+
+    function extractDomain(email) {
+      if (!email) return "";
+      const parts = email.split("@");
+      return parts.length === 2 ? parts[1].toLowerCase() : "";
+    }
+
+    function countDomains(leads) {
+      const domainCounts = {};
+      for (const lead of leads) {
+        const domain = extractDomain(lead.email);
+        if (domain) {
+          domainCounts[domain] = (domainCounts[domain] || 0) + 1;
+        }
+      }
+      return domainCounts;
+    }
+
+    function renderDomainList(domainCounts) {
+      debugLog("Rendering domain list and pie chart...", domainCounts);
+      
+      const totalDomains = Object.keys(domainCounts).length;
+      
+      if (totalDomains === 0) {
+        document.getElementById('widget-content').innerHTML = '<div style="text-align: center; padding: 20px;"><p>No lead emails found.</p></div>';
+        document.getElementById('chart-container').style.display = 'none';
+        return;
+      }
+      
+      // Prepare all domain data with colors
+      const sortedDomains = Object.entries(domainCounts).sort((a, b) => b[1] - a[1]);
+      const colors = generateColors(sortedDomains.length);
+      
+      allDomainData = sortedDomains.map(([domain, count], index) => ({
+        domain,
+        count,
+        color: colors[index]
+      }));
+      
+      // Reset to first page
+      currentPage = 1;
+      
+      // Render table with pagination
+      renderDomainTable();
+      
+      // Create pie chart with ALL data (not paginated)
+      createPieChart(domainCounts);
+      
+      debugLog("Domain list and pie chart rendered successfully");
+    }
+
+    async function main() {
+      debugLog("Starting Email Pattern Finder...");
+      
+      try {
+        showLoading("Initializing...");
+        
+        const leads = await fetchLeads();
+        
+        if (leads.length === 0) {
+          showError("No leads with emails found in your CRM.");
+          return;
+        }
+        
+        showLoading("Analyzing email domains...");
+        const domainCounts = countDomains(leads);
+        renderDomainList(domainCounts);
+        
+        debugLog("Email Pattern Finder completed successfully");
+      } catch (error) {
+        debugLog("Error in main function:", error);
+        
+        let errorMessage = "Failed to load email data. ";
+        
+        if (error.message && error.message.includes("permission")) {
+          errorMessage += "Please check that the app has permission to read Leads.";
+        } else if (error.message && error.message.includes("network")) {
+          errorMessage += "Please check your internet connection.";
+        } else {
+          errorMessage += "Please try again or contact support.";
+        }
+        
+        showError(errorMessage);
+      }
+    }
+
+    main();
+  </script>
+</body>
+</html>

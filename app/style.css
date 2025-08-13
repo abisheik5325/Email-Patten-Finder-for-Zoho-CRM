@@ -1,0 +1,238 @@
+/* Modern Blue & Purple Gradient Theme */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  color: #ffffff;
+  padding: 20px;
+  margin: 0;
+  line-height: 1.6;
+}
+
+h2 {
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #ffffff;
+  border-bottom: 3px solid #ff6b6b;
+  padding-bottom: 10px;
+  font-weight: 600;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+#loading {
+  font-size: 16px;
+  color: #ffffff;
+  text-align: center;
+  padding: 20px;
+  opacity: 0.8;
+}
+
+#loading::after {
+  content: '';
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #ff6b6b;
+  animation: spin 1s ease-in-out infinite;
+  margin-left: 10px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+#widget-content {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  margin-bottom: 20px;
+}
+
+/* Chart Container Styling */
+#chart-container {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  margin-top: 20px;
+}
+
+#chart-container h3 {
+  color: #ffffff;
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 20px;
+  font-weight: 600;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.chart-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 15px;
+}
+
+#domainChart {
+  max-width: 100%;
+  height: auto !important;
+}
+
+/* Table Styling */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+th, td {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 12px 16px;
+  text-align: left;
+}
+
+th {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+  color: #ffffff;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+td {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+tr:hover td {
+  background: rgba(255, 107, 107, 0.2);
+  transition: background-color 0.3s ease;
+  transform: scale(1.02);
+}
+
+/* Pagination Styling */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 15px;
+  gap: 10px;
+}
+
+.pagination-btn {
+  padding: 8px 12px;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  min-width: 35px;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.pagination-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.pagination-info {
+  font-size: 14px;
+  opacity: 0.8;
+  margin-bottom: 10px;
+}
+
+/* List Styling (if used) */
+ul {
+  list-style: none;
+  padding-left: 0;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+li {
+  padding: 10px 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border-radius: 6px;
+  margin-bottom: 5px;
+}
+
+li:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+li:hover {
+  background: rgba(255, 107, 107, 0.3);
+  transition: all 0.3s ease;
+  transform: translateX(5px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  body {
+    padding: 10px;
+  }
+  
+  table, th, td {
+    font-size: 14px;
+  }
+  
+  th, td {
+    padding: 8px;
+  }
+  
+  .chart-wrapper {
+    max-width: 300px;
+    padding: 10px;
+  }
+  
+  #chart-container h3 {
+    font-size: 18px;
+  }
+  
+  #chart-container, #widget-content {
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+  
+  .pagination-controls {
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  
+  .pagination-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+    min-width: 30px;
+  }
+}

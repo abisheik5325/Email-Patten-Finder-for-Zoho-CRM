@@ -1,0 +1,26 @@
+# Node modules
+node_modules/
+
+# Logs
+*.log
+
+# Build output
+/dist/
+/build/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Certificates
+*.pem
+
+# VS Code
+.vscode/
+
+# Environment files
+.env
+
+# Misc
+*.tmp
+*.swp
